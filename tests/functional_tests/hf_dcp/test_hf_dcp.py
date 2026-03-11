@@ -1,0 +1,108 @@
+# Copyright (c) 2025, NVIDIA CORPORATION.  All rights reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+from tests.utils.test_utils import run_test_script
+import shutil
+import pytest
+
+try:
+    import qwen_vl_utils  # noqa: F401
+    _has_qwen_vl_utils = True
+except ImportError:
+    _has_qwen_vl_utils = False
+
+skip_if_no_qwen_vl_utils = pytest.mark.skipif(
+    not _has_qwen_vl_utils,
+    reason="qwen_vl_utils is not installed (pip install qwen-vl-utils)",
+)
+
+TEST_FOLDER = "hf_dcp"
+DCP_FSDP2_CHECKPOINT_FILENAME = "L2_DCP_FSDP2_Checkpoint.sh"
+DCP_VLM_FSDP2_CHECKPOINT_FILENAME = "L2_DCP_VLM_FSDP2_Checkpoint.sh"
+HF_DCP_FSDP2_CHECKPOINT_FILENAME = "L2_HF_DCP_FSDP2_Checkpoint.sh"
+HF_DCP_VLM_FSDP2_CHECKPOINT_FILENAME = "L2_HF_DCP_VLM_FSDP2_Checkpoint.sh"
+HF_DCP_PP2_CHECKPOINT_FILENAME = "L2_DCP_PP2_Checkpoint.sh"
+# hf_consolidated_fsdp
+HF_CONSOLIDATED_FSDP2_LLM_FILENAME = "L2_HF_Consolidated_FSDP2_LLM_Checkpoint.sh"
+HF_CONSOLIDATED_FSDP2_VLM_FILENAME = "L2_HF_Consolidated_FSDP2_VLM_Checkpoint.sh"
+HF_CONSOLIDATED_FSDP2_LLM_SCALAR_WEIGHT_FILENAME = "L2_HF_Consolidated_FSDP2_LLM_Checkpoint_Scalar_Param.sh"
+HF_CONSOLIDATED_PP2_LLM_FILENAME = "L2_HF_Consolidated_PP2_LLM_Checkpoint.sh"
+
+
+class TestHFDCP:
+    def test_dcp_fsdp2_checkpoint(self):
+        try:
+            run_test_script(TEST_FOLDER, DCP_FSDP2_CHECKPOINT_FILENAME)
+        finally:
+            # remove the checkpoint directory
+            shutil.rmtree("checkpoints/", ignore_errors=True)
+
+    @skip_if_no_qwen_vl_utils
+    def test_dcp_vlm_fsdp2_checkpoint(self):
+        try:
+            run_test_script(TEST_FOLDER, DCP_VLM_FSDP2_CHECKPOINT_FILENAME)
+        finally:
+            # remove the checkpoint directory
+            shutil.rmtree("checkpoints/", ignore_errors=True)
+
+    def test_hf_dcp_fsdp2_checkpoint(self):
+        try:
+            run_test_script(TEST_FOLDER, HF_DCP_FSDP2_CHECKPOINT_FILENAME)
+        finally:
+            # remove the checkpoint directory
+            shutil.rmtree("checkpoints/", ignore_errors=True)
+
+    @skip_if_no_qwen_vl_utils
+    def test_hf_dcp_vlm_fsdp2_checkpoint(self):
+        try:
+            run_test_script(TEST_FOLDER, HF_DCP_VLM_FSDP2_CHECKPOINT_FILENAME)
+        finally:
+            # remove the checkpoint directory
+            shutil.rmtree("checkpoints/", ignore_errors=True)
+
+    def test_hf_dcp_pp2_checkpoint(self):
+        try:
+            run_test_script(TEST_FOLDER, HF_DCP_PP2_CHECKPOINT_FILENAME)
+        finally:
+            # remove the checkpoint directory
+            shutil.rmtree("checkpoints/", ignore_errors=True)
+
+    def test_hf_consolidated_fsdp2_llm_checkpoint(self):
+        try:
+            run_test_script(TEST_FOLDER, HF_CONSOLIDATED_FSDP2_LLM_FILENAME)
+        finally:
+            # remove the checkpoint directory
+            shutil.rmtree("checkpoints/", ignore_errors=True)
+
+    @skip_if_no_qwen_vl_utils
+    def test_hf_consolidated_fsdp2_vlm_checkpoint(self):
+        try:
+            run_test_script(TEST_FOLDER, HF_CONSOLIDATED_FSDP2_VLM_FILENAME)
+        finally:
+            # remove the checkpoint directory
+            shutil.rmtree("checkpoints/", ignore_errors=True)
+
+    def test_hf_consolidated_fsdp2_llm_checkpoint_scalar_weight(self):
+        try:
+            run_test_script(TEST_FOLDER, HF_CONSOLIDATED_FSDP2_LLM_SCALAR_WEIGHT_FILENAME)
+        finally:
+            # remove the checkpoint directory
+            shutil.rmtree("checkpoints/", ignore_errors=True)
+
+    def test_hf_consolidated_pp2_llm_checkpoint(self):
+        try:
+            run_test_script(TEST_FOLDER, HF_CONSOLIDATED_PP2_LLM_FILENAME)
+        finally:
+            # remove the checkpoint directory
+            shutil.rmtree("checkpoints/", ignore_errors=True)
