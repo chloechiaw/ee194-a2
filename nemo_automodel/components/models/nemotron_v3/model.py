@@ -260,10 +260,6 @@ class NemotronHForCausalLM(HFCheckpointingMixin, nn.Module, MoEFSDPSyncMixin):
         **kwargs: Any,
     ) -> torch.Tensor | dict[str, torch.Tensor]:
         """Forward pass with optional loss computation."""
-        if not getattr(self, '_weights_initialized', False):
-            self._weights_initialized = True
-            self._lazy_init_weights()
-
         # Forward through base model
         hidden_states = self.model(
             input_ids,
@@ -276,45 +272,6 @@ class NemotronHForCausalLM(HFCheckpointingMixin, nn.Module, MoEFSDPSyncMixin):
         logits = self.lm_head(hidden_states).float()
 
         return logits
-
-    @torch.no_grad()
-    def _lazy_init_weights(self):
-        init_std = getattr(self.config, "initializer_range", 0.02)
-        total_fixed = 0
-        for name, p in self.named_parameters():
-            if p.is_meta:
-                continue
-            t = p._local_tensor if hasattr(p, '_local_tensor') else p
-            total_fixed += 1
-            if "bias" in name:
-                t.zero_()
-            elif "norm" in name.lower() or (name.endswith(".weight") and t.dim() == 1):
-                t.fill_(1.0)
-            elif "D" in name and t.dim() == 1:
-                t.fill_(1.0)
-            else:
-                t.normal_(mean=0.0, std=init_std)
-
-        # Now run proper architecture-specific init (dt_bias, A_log, etc.)
-        try:
-            self.initialize_weights()
-        except Exception as e:
-            print(f"[LAZY-INIT] initialize_weights() failed: {e}", flush=True)
-
-        # Final check for bad values
-        remaining_bad = []
-        for name, p in self.named_parameters():
-            if p.is_meta:
-                continue
-            t = p._local_tensor if hasattr(p, '_local_tensor') else p
-            has_nan = torch.isnan(t).any().item()
-            has_inf = torch.isinf(t).any().item()
-            absmax = t[~torch.isnan(t)].abs().max().item() if t.numel() > 0 and not torch.isnan(t).all().item() else 0
-            if has_nan or has_inf or absmax > 1e6:
-                remaining_bad.append(f"{name}(nan={has_nan},inf={has_inf},absmax={absmax:.2e})")
-        print(f"[LAZY-INIT] Initialized {total_fixed} params. Bad remaining: {len(remaining_bad)}", flush=True)
-        if remaining_bad:
-            print(f"[LAZY-INIT] Bad params: {remaining_bad[:20]}", flush=True)
 
     @torch.no_grad()
     def initialize_weights(
